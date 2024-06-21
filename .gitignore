@@ -4,3 +4,6 @@
 *.ptx
 *.cubin
 *.fatbin
+Triathlon/
+x64/
+.vs
