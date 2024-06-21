@@ -58,7 +58,7 @@ This project simulates a triathlon event where 300 teams, each consisting of 3 a
 Berke Kocadere [berkekocadere@gmail.com]
 
 ## License
-This project is licensed under the MIT License - see the - [MIT LICENSE](./LICENSE) file for details.
+This project is licensed under the MIT License - see the - [MIT LICENSE](./LICENSE.txt) file for details.
 
 ## Acknowledgements
 - CUDA Toolkit Documentation
