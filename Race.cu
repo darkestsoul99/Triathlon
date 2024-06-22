@@ -129,7 +129,7 @@ cudaError_t Race::startRace(const int team_index, const int athlete_index) {
         raceTime++;
         // Print debugging information
         int i = team_index * 3 + athlete_index;
-        printf("Athlete %d: Position = %f, Speed = %f, Time = %f, Segment = %d\n", i, athletes[i].position, athletes[i].speed, athletes[i].time, athletes[i].segment);
+        printf("Athlete %d: Position = %f, Speed = %f, Time = %f, Segment = %d\n", i, athletes[i].position, athletes[i].speed, raceTime, athletes[i].segment);
         if (!race_ongoing) break;
     }
 
