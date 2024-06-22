@@ -24,6 +24,9 @@
     <CudaCompile Include="Race.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
+    <CudaCompile Include="kernel.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Triathlon.rc">

@@ -1,53 +1,10 @@
 #include "Race.cuh"
-#include "Athlete.cuh"
-#include <iostream>
-#include <algorithm>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include <thread>
-#include <chrono>
-
-#include <stdio.h>
-
+#include "kernel.cu"
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true) {
     if (code != cudaSuccess) {
         fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
         if (abort) exit(code);
-    }
-}
-
-// CUDA kernel to update athlete positions
-__global__ void updatePositions(Athlete* athletes, float raceTime) {
-    int segment_distances[3] = { 5000, 45000, 100000 }; // Swimming, Cycling, Running distances
-    int num_athletes = 900;
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (int i = idx; i < num_athletes; i += stride) {
-        if (athletes[i].race_finished == false) {
-            // Update athlete's position
-            athletes[i].position += athletes[i].speed;
-            athletes[i].time += 1; // 1 second per update
-
-            // Handle segment transitions
-            if (athletes[i].segment == 0 && athletes[i].position >= segment_distances[0]) {
-                athletes[i].speed *= 3;
-                athletes[i].time += 10;
-                athletes[i].segment = 1;
-                athletes[i].position = segment_distances[0]; // Exact segment boundary
-            }
-            else if (athletes[i].segment == 1 && athletes[i].position >= segment_distances[1]) {
-                athletes[i].speed /= 3;
-                athletes[i].time += 10;
-                athletes[i].segment = 2;
-                athletes[i].position = segment_distances[1]; // Exact segment boundary
-            }
-            else if (athletes[i].segment == 2 && athletes[i].position >= segment_distances[2]) {
-                athletes[i].time += raceTime;
-                athletes[i].position = segment_distances[2];
-                athletes[i].race_finished = true;
-            }
-        }
     }
 }
 
@@ -57,6 +14,26 @@ Race::Race(int n, std::vector<std::vector<float>>& athlete_speeds) : num_teams(n
     }
     std::cout << "Race created." << std::endl;
     std::cout << "Number of teams: " << teams.size() << std::endl;
+}
+
+std::vector<Team> Race::getTeams() {
+    return this->teams;
+}
+
+int Race::getNumberOfTeams() {
+    return this->num_teams;
+}
+
+void Race::setNumberOfTeams(int num_teams) {
+    this->num_teams = num_teams;
+}
+
+float Race::getRaceTime() {
+    return this->raceTime;
+}
+
+void Race::setRaceTime(float raceTime) {
+    this->raceTime = raceTime;
 }
 
 cudaError_t Race::startRace(const int team_index, const int athlete_index) {
@@ -83,16 +60,16 @@ cudaError_t Race::startRace(const int team_index, const int athlete_index) {
     for (int i = 0; i < num_teams; ++i) {
         for (int j = 0; j < 3; ++j) {
             int idx = i * 3 + j;
-            athletes[idx].team_id = i;
-            athletes[idx].speed = teams[i].athletes[j].speed;
-            athletes[idx].position = teams[i].athletes[j].position; // Start at the beginning
-            athletes[idx].time = teams[i].athletes[j].time; // Start time
-            athletes[idx].segment = teams[i].athletes[j].segment; // Start in swimming segment
+            athletes[idx].setTeamId(i);
+            athletes[idx].setSpeed(teams[i].getAthletes()[j].getSpeed());
+            athletes[idx].setPosition(teams[i].getAthletes()[j].getPosition()); // Start at the beginning
+            athletes[idx].setFinishTime(teams[i].getAthletes()[j].getFinishTime()); // Start time
+            athletes[idx].setSegment(teams[i].getAthletes()[j].getSegment()); // Start in swimming segment
         }
     }
 
     while (true) {
-        int num_blocks = static_cast<int>((num_athletes + 255) / 256);
+        int num_blocks = static_cast<int>((num_athletes + 255) / 256); // Ensure to make it integer
         int blockSize = 256;
         updatePositions<<<num_blocks, blockSize>>>(athletes, raceTime);
         // Check for any errors launching the kernel
@@ -113,7 +90,7 @@ cudaError_t Race::startRace(const int team_index, const int athlete_index) {
         // Check for race completion
         bool race_ongoing = false;
         for (int i = 0; i < num_athletes; ++i) {
-            if (athletes[i].position < segment_distances[2]) {
+            if (athletes[i].getPosition() < segment_distances[2]) {
                 race_ongoing = true;
                 break;
             }
@@ -130,7 +107,7 @@ cudaError_t Race::startRace(const int team_index, const int athlete_index) {
         raceTime++;
         // Print debugging information
         int i = team_index * 3 + athlete_index;
-        printf("Athlete %d: Position = %f, Speed = %f, Time = %f, Segment = %d\n", i, athletes[i].position, athletes[i].speed, athletes[i].time, athletes[i].segment);
+        printf("Athlete %d: Position = %f, Speed = %f, Time = %f, Segment = %d\n", i, athletes[i].getPosition(), athletes[i].getSpeed(), raceTime, athletes[i].getSegment());
         if (!race_ongoing) break;
     }
 
@@ -150,8 +127,8 @@ void Race::printAthleteResults(Athlete* athletes) {
     for (int i = 0; i < num_teams; ++i) {
         for (int j = 0; j < 3; ++j) {
             int idx = i * 3 + j;
-            std::cout << "Athlete in team " << teams[i].team_id << " - Position: " << athletes[idx].position
-                << ", Speed: " << athletes[idx].speed << ", Time: " << athletes[idx].time << " seconds\n";
+            std::cout << "Athlete" << j <<  " in team " << teams[i].getTeamId() << " - Position: " << athletes[idx].getPosition()
+                << ", Speed: " << athletes[idx].getSpeed() << ", Time: " << athletes[idx].getFinishTime() << " seconds\n";
         }
     }
 }
@@ -161,14 +138,16 @@ void Race::printTeamResults(Athlete* athletes) {
     std::vector<std::pair<int, float>> team_times;
     for (int i = 0; i < num_teams; ++i) {
         float total_time = 0.0f;
+        float average_time = 0;
         for (int j = 0; j < 3; ++j) {
             int idx = i * 3 + j;
-            total_time += athletes[idx].time;
+            total_time += athletes[idx].getFinishTime();
         }
-        team_times.emplace_back(i, total_time);
+        average_time = total_time / 3;
+        team_times.emplace_back(i, average_time);
     }
 
-    // Sort teams by total time
+    // Sort teams by average time
     std::sort(team_times.begin(), team_times.end(), [](const auto& left, const auto& right) {
         return left.second < right.second;
         });
@@ -177,6 +156,6 @@ void Race::printTeamResults(Athlete* athletes) {
     std::cout << "Team Rankings:\n";
     for (size_t i = 0; i < team_times.size(); ++i) {
         std::cout << "Rank " << (i + 1) << ": Team " << team_times[i].first
-            << " Total Time: " << team_times[i].second << " seconds\n";
+            << " Average Time: " << team_times[i].second << " seconds\n";
     }
 }
