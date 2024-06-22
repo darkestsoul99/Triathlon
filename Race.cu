@@ -19,7 +19,7 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 
 // CUDA kernel to update athlete positions
 __global__ void updatePositions(Athlete* athletes, float raceTime) {
-    int segment_distances[3] = { 5000, 45000, 100000 }; // Swimming, Cycling, Running distances
+    int segment_distances[3] = { 5000, 45000, 55000 }; // Swimming, Cycling, Running distances
     int num_athletes = 900;
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -27,7 +27,6 @@ __global__ void updatePositions(Athlete* athletes, float raceTime) {
         if (athletes[i].race_finished == false) {
             // Update athlete's position
             athletes[i].position += athletes[i].speed;
-            athletes[i].time += 1; // 1 second per update
 
             // Handle segment transitions
             if (athletes[i].segment == 0 && athletes[i].position >= segment_distances[0]) {
@@ -165,7 +164,8 @@ void Race::printTeamResults(Athlete* athletes) {
             int idx = i * 3 + j;
             total_time += athletes[idx].time;
         }
-        team_times.emplace_back(i, total_time);
+        float average_time = total_time / 3;
+        team_times.emplace_back(i, average_time);
     }
 
     // Sort teams by total time

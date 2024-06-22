@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 
     // Initialize random speeds for athletes
     std::default_random_engine gen(std::time(nullptr));
-    std::uniform_real_distribution<float> distrib(1000.0f, 2000.0f);
+    std::uniform_real_distribution<float> distrib(1.0f, 5.0f);
 
     // Set cout to display floating-point numbers with 2 digits after the decimal point
     std::cout << std::fixed << std::setprecision(2);
