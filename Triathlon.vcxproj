@@ -110,6 +110,10 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CudaCompile>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <CodeGeneration>compute_52,sm_52</CodeGeneration>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -129,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="Athlete.cu" />
+    <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="main.cu" />
     <CudaCompile Include="Race.cu" />
   </ItemGroup>
