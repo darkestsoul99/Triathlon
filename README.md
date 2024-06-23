@@ -28,6 +28,10 @@ This project simulates a triathlon event where 300 teams, each consisting of 3 a
 
 ### Running the Simulation
 
+**It is recommended to compile and run the project in Visual Studio 2022 with CUDA 12.5**
+
+To manually compile and run the project with nvcc on bash, follow the instructions below:
+
 1. **Clone the Repository:**
    ```bash
    git clone https://github.com/yourusername/triathlon-simulation.git
