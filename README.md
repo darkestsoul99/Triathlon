@@ -34,19 +34,18 @@ This project simulates a triathlon event where 300 teams, each consisting of 3 a
    cd triathlon-simulation
 2. **Compile the code:**
    ```bash
-   nvcc -o triathlon triathlon.cu
+   nvcc -o triathlon athlete.cu team.cu race.cu main.cu
 3. **Run the simulation:**
    ```bash
    ./triathlon team_id athlete_id
 
 ## Example
-- To track athletes with IDs 1, 2, and 3, run:
+- To track athletes with ID 2 of Team 3, run:
    ```bash
-   ./triathlon team_id athlete_id
+   ./triathlon 3 2
 
 ## Project Structure
-- triathlon.cu: The main CUDA C++ source file containing the simulation logic.
-- Makefile: Instructions for compiling the project.
+- main.cu: The main CUDA C++ source file containing the simulation logic.
 - README.md: This README file.
 
 ## Output
